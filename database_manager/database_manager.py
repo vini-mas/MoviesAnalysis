@@ -69,7 +69,7 @@ class DatabaseManager:
     def create_ratings_table(self):
         self.execute_query('Create Ratings Table', 
             """CREATE TABLE Ratings ( 
-                RatingId int(11) NOT NULL,
+                RatingId int(11) NOT NULL AUTO_INCREMENT,
                 AverageRating float(11) NOT NULL,
                 Votes int(11) NOT NULL,
                 PRIMARY KEY (RatingId)) """)
@@ -85,12 +85,17 @@ class DatabaseManager:
     def insert_into_genres_table(self, genre):
         query =  "INSERT INTO movies.genres (Name) VALUES (%s)"
         values = (genre.name, )
-        self.execute_commit_query('Insert Genres Table', query, values)
+        self.execute_commit_query('Insert into Genres Table', query, values)
 
     def insert_into_movies_table(self, movie):
         query =  "INSERT INTO movies.movies (Title, Year, Genre, RatingId) VALUES (%s, %s, %s, %s)"
         values = (movie.title, movie.year, movie.genre, movie.rating_id)
-        self.execute_commit_query('Insert Movies Table', query, values)
+        self.execute_commit_query('Insert into Movies Table', query, values)
+
+    def insert_into_ratings_table(self, rating):
+        query =  "INSERT INTO movies.ratings (AverageRating, Votes) VALUES (%s, %s)"
+        values = (rating.average_rating, rating.votes)
+        self.execute_commit_query('Insert into Ratings Table', query, values)
 
     def create_tables(self):
         self.create_genres_table()

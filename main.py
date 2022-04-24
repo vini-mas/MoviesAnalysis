@@ -1,6 +1,7 @@
 from database_manager.database_manager import DatabaseManager
 from database_manager.genre import Genre
 from database_manager.movie import Movie
+from database_manager.rating import Rating
 from imdb_data_importer.imdb_data_importer import ImdbDataImporter
 
 if __name__ == "__main__":
@@ -21,6 +22,9 @@ if __name__ == "__main__":
 
         movie = Movie("ana", 1999, "linda", None)
         database_manager.insert_into_movies_table(movie)
+
+        rating = Rating(10, 20)
+        database_manager.insert_into_ratings_table(rating)
 
         database_manager.close_connection()
     else: 
