@@ -96,8 +96,8 @@ class DatabaseManager:
     def create_movie_genre_table(self):
         self.execute_query('Create MovieGenre Table', 
             """CREATE TABLE MovieGenre (                 
-                MovieId INT NOT NULL,
-                GenreId INT NOT NULL,
+                MovieId int(11) NOT NULL,
+                GenreId int(11)T NOT NULL,
                 FOREIGN KEY(MovieId) REFERENCES Movie(MovieId),
                 FOREIGN KEY(GenreId) REFERENCES Genre(GenreId),
                 PRIMARY KEY CLUSTERED (MovieId, GenreId))""")
