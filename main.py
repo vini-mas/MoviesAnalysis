@@ -1,4 +1,5 @@
 from database_manager.database_manager import DatabaseManager
+from imdb_data_importer.imdb_data_importer import ImdbDataImporter
 
 if __name__ == "__main__":
     database_manager = DatabaseManager('root', 'ana123')
@@ -6,4 +7,13 @@ if __name__ == "__main__":
     if database_manager.connection:
         database_manager.reset_database()
         database_manager.create_tables()
+
+        imdb_data_importer = ImdbDataImporter()
+
+        print(imdb_data_importer.movies.head())
+        print(imdb_data_importer.ratings.head())
+        print(imdb_data_importer.directors_and_writers.head())
+
         database_manager.close_connection()
+    else: 
+        raise Exception('Unable to connect to database')
