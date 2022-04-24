@@ -50,6 +50,16 @@ class DatabaseManager:
         except mysql.connector.Error as error:
             print("Failed to run query " + query_name + " in MySQL: {}".format(error))
 
+    def execute_commit_query(self, query_name: str, query: str, values: tuple):
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(query, values)
+            self.connection.commit()
+            print("Query " + query_name + " executed successfully ")
+            
+        except mysql.connector.Error as error:
+            print("Failed to run commit query " + query_name + " in MySQL: {}".format(error))
+
     def create_movies_table(self): 
         self.execute_query('Create Movies Table',
             """CREATE TABLE Movies ( 
@@ -78,9 +88,9 @@ class DatabaseManager:
 
 
     def insert_into_genres_table(self):
-        self.execute_query('Insert Genres Table', """INSERT INTO movies.genres (GenreId, Name) VALUES (1, "oi")""")
-        #self.execute_query('Insert Genres Table', 'INSERT INTO Genres ('+ genre.id + ', ' + genre.name + ');')
-        self.connection.commit()
+        query =  "INSERT INTO movies.genres (GenreId, Name) VALUES (%s, %s)"
+        values = ("1", "oi")
+        self.execute_commit_query('Insert Genres Table', query, values)
 
     def create_tables(self):
         self.create_genres_table()
