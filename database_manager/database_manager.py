@@ -80,6 +80,7 @@ class DatabaseManager:
                 MovieImdbId varchar(250) NOT NULL,
                 Type varchar(250),
                 Title varchar(250) NOT NULL,
+                Genres varchar(250),
                 Year int(11) NOT NULL,
                 AverageRating float(11) NOT NULL,
                 Votes int(11) NOT NULL,
@@ -104,9 +105,9 @@ class DatabaseManager:
     def insert_many_into_movie_table(self, movies: list[Movie]):
         values = []
         for movie in movies:
-            values.append((movie.movie_imdb_id, movie.type, movie.title, movie.year, movie.average_rating, movie.votes))
+            values.append((movie.movie_imdb_id, movie.type, movie.title, movie.genres, movie.year, movie.average_rating, movie.votes))
         
-        query =  "INSERT INTO movies.movie (MovieImdbId, Type, Title, Year, AverageRating, Votes) VALUES (%s, %s, %s, %s, %s, %s)"
+        query =  "INSERT INTO movies.movie (MovieImdbId, Type, Title, Genres, Year, AverageRating, Votes) VALUES (%s, %s, %s, %s, %s, %s, %s)"
         self.execute_many_commit_query('Insert Many into Movie Table', query, values)
 
     def insert_into_genre_table(self, genre: Genre):

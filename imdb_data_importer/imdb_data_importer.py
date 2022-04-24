@@ -8,7 +8,8 @@ class ImdbDataImporter:
     directors_and_writers: pd.DataFrame
     genres: list[str] = []
 
-    def __init__(self):
+    def __init__(self, limit_movie_rows):
+        self.limit_movie_rows = limit_movie_rows
         print("\nConverting Data to Dataframe...")
         self.read_movies_and_ratings()
         # self.read_directors_and_writers()
@@ -33,7 +34,7 @@ class ImdbDataImporter:
             'runtimeMinutes': np.str_, 
             'genres': np.str_ 
         }
-        movies = pd.read_csv("imdb_data/movies.tsv", sep='\t', dtype=column_types, na_values="\\N")
+        movies = pd.read_csv("imdb_data/movies.tsv", sep='\t', dtype=column_types, na_values="\\N", nrows=self.limit_movie_rows)
 
         self.movies = pd.merge(movies, ratings, how='left', on='tconst')
         
@@ -44,14 +45,17 @@ class ImdbDataImporter:
         self.movies['titleType'] = self.movies['titleType'].str[:240]
         self.movies['tconst'] = self.movies['tconst'].str[:240]
         self.movies['originalTitle'] = self.movies['originalTitle'].str[:240]
+        
+        for genres in self.movies["genres"]:
+            if(not pd.isnull(genres)):
+                self.genres.extend([genre for genre in genres.split(',') if genre not in self.genres])
+
+        self.movies['genres'] = self.movies['genres'].fillna('')
 
         # Drop Unused Columns
         dropped_columns = ['isAdult', 'primaryTitle', 'endYear', 'runtimeMinutes']
         self.movies = self.movies.drop(columns=[e for e in dropped_columns])
 
-        for genres in self.movies["genres"]:
-            if(not pd.isnull(genres)):
-                self.genres.extend([genre for genre in genres.split(',') if genre not in self.genres])
 
 
     def read_directors_and_writers(self):

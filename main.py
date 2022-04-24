@@ -26,7 +26,7 @@ if __name__ == "__main__":
         database_manager.reset_database()
         database_manager.create_tables()
 
-        imdb_data_importer = ImdbDataImporter()
+        imdb_data_importer = ImdbDataImporter(limit_movie_rows=500000)
 
         added_genres: list[Genre] = []
         bar = initialize_progress_bar(f'Inserting {len(imdb_data_importer.genres)} Genres', size=len(imdb_data_importer.genres))
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         bar.finish()
 
         # Insert Movie
-        ## 500k entries ~40min (genre takes a lot of time)
+        ## 500k entries ~40min or more (genre takes a lot of time)
         movies: list[Movie] = []
         bar = initialize_progress_bar(f'Mapping {len(imdb_data_importer.movies)} Movies', size=len(imdb_data_importer.movies))
         for index, row in imdb_data_importer.movies.iterrows():  
@@ -50,22 +50,17 @@ if __name__ == "__main__":
         print("\nSelecting Inserted Movies...")
         inserted_movies = database_manager.get_all_movies()
 
-        movie_genres: list[MovieGenre] = []
-        bar = initialize_progress_bar(f'Mapping Genres from {len(inserted_movies)} Movies', size=len(inserted_movies))
-        for index, movie_tuple in enumerate(inserted_movies): 
-            bar.update(index)
-            genres_string = next((x for x in movies if x.movie_imdb_id == movie_tuple[1]), []).genres
-            
-            if(not pd.isnull(genres_string)):
-                genres_string_list = genres_string.split(',')  
-                genres = [x for x in added_genres if x.name in genres_string_list]
+        movie_genre_list: list[MovieGenre] = []
+        bar = initialize_progress_bar(f'Mapping MovieGenres from {len(added_genres)} Genres', size=len(added_genres))
 
-                for genre in genres:
-                    movie_genres.append(MovieGenre(movie_tuple[0], genre.genre_id))
+        for index, added_genre in enumerate(added_genres):
+            bar.update(index)
+            genre_movies = [MovieGenre(x[0], added_genre.genre_id) for x in inserted_movies if added_genre.name in x[4]]
+            movie_genre_list.extend(genre_movies)
         bar.finish()
         
         print("\nInserting MovieGenres...")
-        database_manager.insert_many_into_movie_genre_table(movie_genres)
+        database_manager.insert_many_into_movie_genre_table(movie_genre_list)
 
         print("Done.")
         # genre = Genre("terror")
