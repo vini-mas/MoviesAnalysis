@@ -1,6 +1,7 @@
 from database_manager.database_manager import DatabaseManager
 from entities.genre import Genre
 from entities.movie import Movie
+from entities.movie_genre import MovieGenre
 from imdb_data_importer.imdb_data_importer import ImdbDataImporter
 import numpy as np
 import pandas as pd
@@ -27,43 +28,45 @@ if __name__ == "__main__":
 
         imdb_data_importer = ImdbDataImporter()
 
-
-        # print(imdb_data_importer.movies.head())
-        # print(imdb_data_importer.ratings.head())
-        # print(imdb_data_importer.directors_and_writers.head())
-
-        added_genres = []
+        added_genres: list[Genre] = []
+        bar = initialize_progress_bar(f'\nInserting {len(imdb_data_importer.genres)} Genres', size=len(imdb_data_importer.genres))
+        for index, genre in enumerate(imdb_data_importer.genres):
+            bar.update(index)        
+            added_genres.append(database_manager.insert_into_genre_table(Genre(0, genre)))            
+        bar.finish()
 
         # Insert Movie
-        bar = initialize_progress_bar(f'\nInserting {imdb_data_importer.movies.size} Movies', size=imdb_data_importer.movies.size)
+        movies: list[Movie] = []
+        bar = initialize_progress_bar(f'\nMapping {imdb_data_importer.movies.size} Movies', size=imdb_data_importer.movies.size)
         for index, row in imdb_data_importer.movies.iterrows():  
-            bar.update(index)          
-            movie = database_manager.insert_into_movie_table(Movie(0, row['originalTitle'], row['startYear'], row["averageRating"], row["numVotes"]))
+            bar.update(index)
+            movies.append(Movie(0, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+        bar.finish()
 
-            try:
-                if(not pd.isnull(row['genres'])):
-                    new_genres = row['genres'].split(',')
+        print("\nInserting Movies...")
+        database_manager.insert_many_into_movie_table(movies)
 
-                    # Insert Genre and MovieGenre
-                    for index, new_genre in enumerate(new_genres):
-                        inserted_genre = [x for x in added_genres if x.name == new_genre]
+        print("\nSelecting Inserted Movies...")
+        inserted_movies = database_manager.get_all_movies()
 
-                        if(len(inserted_genre) > 0):   
-                            database_manager.insert_into_movie_genre_table(movie.movie_id, inserted_genre[0].genre_id)
-                        else:
-                            added_genre = database_manager.insert_into_genre_table(Genre(0, new_genre))
-                            added_genres.insert(0, added_genre)
-                            database_manager.insert_into_movie_genre_table(movie.movie_id, added_genre.genre_id)
-            except:
-                raise Exception(row['genres'])
+        movie_genres: list[MovieGenre] = []
+        bar = initialize_progress_bar(f'\Mapping Genres from {len(inserted_movies)} Movies', size=len(inserted_movies))
+        for index, movie_tuple in enumerate(inserted_movies): 
+            bar.update(index)
+            genres_string = next((x for x in movies if x.movie_imdb_id == movie_tuple[1]), []).genres
             
-            
+            if(not pd.isnull(genres_string)):
+                genres_string_list = genres_string.split(',')  
+                genres = [x for x in added_genres if x.name in genres_string_list]
 
-            
+                for genre in genres:
+                    movie_genres.append(MovieGenre(movie_tuple[0], genre.genre_id))
+        bar.finish()
+        
+        print("\nInserting MovieGenres...")
+        database_manager.insert_many_into_movie_genre_table(movie_genres)
 
-
-
-
+        print("Done.")
         # genre = Genre("terror")
         # database_manager.insert_into_genres_table(genre)
 
