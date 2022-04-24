@@ -8,19 +8,18 @@ class ImdbDataImporter:
     directors_and_writers: pd.DataFrame
 
     def __init__(self):
-        self.read_ratings()
-        self.read_movies()
-        self.read_directors_and_writers()
+        self.read_movies_and_ratings()
+        # self.read_directors_and_writers()
+        
 
-    def read_ratings(self):
+    def read_movies_and_ratings(self):
         column_types = { 
             'tconst': np.str_, 
             'averageRating': np.float64, 
             'numVotes': np.float64 
         }
-        self.ratings = pd.read_csv("imdb_data/ratings.tsv", sep='\t', dtype = column_types)
+        ratings = pd.read_csv("imdb_data/ratings.tsv", sep='\t', dtype = column_types).reset_index()
 
-    def read_movies(self):
         column_types = { 
             'tconst': np.str_, 
             'titleType': np.str_, 
@@ -32,7 +31,14 @@ class ImdbDataImporter:
             'runtimeMinutes': np.str_, 
             'genres': np.str_ 
         }
-        self.movies = pd.read_csv("imdb_data/movies.tsv", sep='\t', dtype=column_types, na_values="\\N")
+        movies = pd.read_csv("imdb_data/movies.tsv", sep='\t', dtype=column_types, na_values="\\N").reset_index()
+
+        self.movies = pd.concat([movies, ratings.reindex(movies.index)], axis=1)
+        
+        self.movies['originalTitle'] = self.movies['originalTitle'].fillna('unknown')
+        self.movies['startYear'] = self.movies['startYear'].fillna(0)
+        self.movies['averageRating'] = self.movies['averageRating'].fillna(0)
+        self.movies['numVotes'] = self.movies['numVotes'].fillna(0)
 
     def read_directors_and_writers(self):
         column_types = { 
@@ -40,4 +46,4 @@ class ImdbDataImporter:
             'directors': np.str_, 
             'writers': np.str_, 
         }
-        self.directors_and_writers = pd.read_csv("imdb_data/directors_writers.tsv", sep='\t', dtype=column_types, na_values="\\N")
+        self.directors_and_writers = pd.read_csv("imdb_data/directors_writers.tsv", sep='\t', dtype=column_types, na_values="\\N").reset_index()
