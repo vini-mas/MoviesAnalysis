@@ -1,3 +1,4 @@
+from multiprocessing import connection
 import mysql.connector
 from mysql.connector import Error
 
@@ -33,17 +34,17 @@ class DatabaseManager:
 
         return None
     
-    def close_connection(connection):
-        if connection.is_connected():
-            cursor = connection.cursor()
+    def close_connection(self):
+        if self.connection.is_connected():
+            cursor = self.connection.cursor()
             cursor.close()
-            connection.close()
+            self.connection.close()
             print("MySQL connection is closed")
 
     def execute_query(self, query_name: str, query: str):
         try:
             cursor = self.connection.cursor()
-            result = cursor.execute(query)
+            cursor.execute(query)
             print("Query " + query_name + " executed successfully ")
 
         except mysql.connector.Error as error:
@@ -64,13 +65,28 @@ class DatabaseManager:
         self.execute_query('Create Ratings Table', 
             """CREATE TABLE Ratings ( 
                 RatingId int(11) NOT NULL,
-                AverageRating int(11) NOT NULL,
+                AverageRating float(11) NOT NULL,
                 Votes int(11) NOT NULL,
                 PRIMARY KEY (RatingId)) """)
 
+    def create_genres_table(self):
+        self.execute_query('Create Genres Table', 
+            """CREATE TABLE Genres ( 
+                GenreId int(11) NOT NULL,
+                Name varchar(250) NOT NULL,
+                PRIMARY KEY (GenreId)) """)
+
+
+    def insert_into_genres_table(self):
+        self.execute_query('Insert Genres Table', """INSERT INTO movies.genres (GenreId, Name) VALUES (1, "oi")""")
+        #self.execute_query('Insert Genres Table', 'INSERT INTO Genres ('+ genre.id + ', ' + genre.name + ');')
+        self.connection.commit()
+
     def create_tables(self):
+        self.create_genres_table()
         self.create_ratings_table()
         self.create_movies_table()
+        self.insert_into_genres_table()
                   
     def drop_table(self, table_name):
         self.execute_query('Drop Table' + table_name, "DROP TABLE IF EXISTS "  + table_name + " ; ")
@@ -78,3 +94,4 @@ class DatabaseManager:
     def reset_database(self):
         self.drop_table('Movies')
         self.drop_table('Ratings')
+        self.drop_table('Genres')
