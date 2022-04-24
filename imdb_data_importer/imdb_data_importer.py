@@ -41,6 +41,9 @@ class ImdbDataImporter:
         self.movies['startYear'] = self.movies['startYear'].fillna(0)
         self.movies['averageRating'] = self.movies['averageRating'].fillna(0)
         self.movies['numVotes'] = self.movies['numVotes'].fillna(0)
+        self.movies['titleType'] = self.movies['titleType'].str[:240]
+        self.movies['tconst'] = self.movies['tconst'].str[:240]
+        self.movies['originalTitle'] = self.movies['originalTitle'].str[:240]
 
         # Drop Unused Columns
         dropped_columns = ['isAdult', 'primaryTitle', 'endYear', 'runtimeMinutes']

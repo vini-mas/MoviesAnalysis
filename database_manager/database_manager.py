@@ -26,6 +26,8 @@ class DatabaseManager:
                 record = cursor.fetchone()
                 print("You're connected to database: ", record)
 
+                cursor.execute('set global max_allowed_packet=67108864')
+
                 return connection
 
         except Error as e:
@@ -69,9 +71,7 @@ class DatabaseManager:
             return cursor.lastrowid
             
         except mysql.connector.Error as error:
-            print(query)
-            print(values)
-            raise Exception("Failed to run commit \nQuery Name: " + query_name + "\nQuery:"+ query + "".join(values) +"\n in MySQL: {}".format(error))
+            raise Exception("Failed to run commit Query Name: " + query_name + " in MySQL: {}".format(error))
 
     def create_movie_table(self): 
         self.execute_query('Create Movie Table',

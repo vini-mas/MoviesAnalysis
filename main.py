@@ -29,15 +29,16 @@ if __name__ == "__main__":
         imdb_data_importer = ImdbDataImporter()
 
         added_genres: list[Genre] = []
-        bar = initialize_progress_bar(f'\nInserting {len(imdb_data_importer.genres)} Genres', size=len(imdb_data_importer.genres))
+        bar = initialize_progress_bar(f'Inserting {len(imdb_data_importer.genres)} Genres', size=len(imdb_data_importer.genres))
         for index, genre in enumerate(imdb_data_importer.genres):
             bar.update(index)        
             added_genres.append(database_manager.insert_into_genre_table(Genre(0, genre)))            
         bar.finish()
 
         # Insert Movie
+        ## 500k entries ~40min (genre takes a lot of time)
         movies: list[Movie] = []
-        bar = initialize_progress_bar(f'\nMapping {imdb_data_importer.movies.size} Movies', size=imdb_data_importer.movies.size)
+        bar = initialize_progress_bar(f'Mapping {len(imdb_data_importer.movies)} Movies', size=len(imdb_data_importer.movies))
         for index, row in imdb_data_importer.movies.iterrows():  
             bar.update(index)
             movies.append(Movie(0, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
@@ -50,7 +51,7 @@ if __name__ == "__main__":
         inserted_movies = database_manager.get_all_movies()
 
         movie_genres: list[MovieGenre] = []
-        bar = initialize_progress_bar(f'\Mapping Genres from {len(inserted_movies)} Movies', size=len(inserted_movies))
+        bar = initialize_progress_bar(f'Mapping Genres from {len(inserted_movies)} Movies', size=len(inserted_movies))
         for index, movie_tuple in enumerate(inserted_movies): 
             bar.update(index)
             genres_string = next((x for x in movies if x.movie_imdb_id == movie_tuple[1]), []).genres
