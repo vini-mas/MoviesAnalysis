@@ -76,7 +76,5 @@ class DatabaseManager:
         self.execute_query('Drop Table' + table_name, "DROP TABLE IF EXISTS "  + table_name + " ; ")
 
     def reset_database(self):
-        self.drop_table('Movie')
-        self.drop_table('Rating')
         self.drop_table('Movies')
         self.drop_table('Ratings')
