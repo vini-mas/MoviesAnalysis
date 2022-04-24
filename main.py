@@ -19,8 +19,11 @@ def initialize_progress_bar(label: str, size: int):
 
     return bar
 
+def movie_has_votes(votes):
+    return str(votes) != "0.0"
+
 if __name__ == "__main__":
-    database_manager = DatabaseManager('root', 'admin')
+    database_manager = DatabaseManager('root', 'ana123')
     
     if database_manager.connection:
         database_manager.reset_database()
@@ -41,7 +44,8 @@ if __name__ == "__main__":
         bar = initialize_progress_bar(f'Mapping {len(imdb_data_importer.movies)} Movies', size=len(imdb_data_importer.movies))
         for index, row in imdb_data_importer.movies.iterrows():  
             bar.update(index)
-            movies.append(Movie(0, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+            if movie_has_votes(row[6]):
+                movies.append(Movie(0, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
         bar.finish()
 
         print("\nInserting Movies...")
