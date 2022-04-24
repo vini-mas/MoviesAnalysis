@@ -64,8 +64,8 @@ class DatabaseManager:
         self.execute_query('Create Ratings Table', 
             """CREATE TABLE Ratings ( 
                 RatingId int(11) NOT NULL,
-                Rate int(11) NOT NULL,
-                Votes varchar(250) NOT NULL,
+                AverageRating int(11) NOT NULL,
+                Votes int(11) NOT NULL,
                 PRIMARY KEY (RatingId)) """)
 
     def create_tables(self):
