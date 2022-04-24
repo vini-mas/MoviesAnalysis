@@ -3,11 +3,6 @@ import mysql.connector
 from mysql.connector import Error
 
 class DatabaseManager:
-    
-    user: str
-    password: str
-    connection: any
-
     def __init__(self, user, password):
         self.user = user
         self.password = password
@@ -63,11 +58,11 @@ class DatabaseManager:
     def create_movies_table(self): 
         self.execute_query('Create Movies Table',
             """CREATE TABLE Movies ( 
-                MovieId int(11) NOT NULL,
+                MovieId int(11) NOT NULL AUTO_INCREMENT,
                 Title varchar(250) NOT NULL,
                 Year int(11) NOT NULL,
                 Genre varchar(250) NOT NULL,
-                RatingId int(11) NOT NULL,
+                RatingId int(11),
                 PRIMARY KEY (MovieId), 
                 FOREIGN KEY (RatingId) REFERENCES Ratings(RatingId))""")
 
@@ -82,21 +77,25 @@ class DatabaseManager:
     def create_genres_table(self):
         self.execute_query('Create Genres Table', 
             """CREATE TABLE Genres ( 
-                GenreId int(11) NOT NULL,
+                GenreId int(11) NOT NULL AUTO_INCREMENT,
                 Name varchar(250) NOT NULL,
-                PRIMARY KEY (GenreId)) """)
+                PRIMARY KEY (GenreId))""")
 
 
-    def insert_into_genres_table(self):
-        query =  "INSERT INTO movies.genres (GenreId, Name) VALUES (%s, %s)"
-        values = ("1", "oi")
+    def insert_into_genres_table(self, genre):
+        query =  "INSERT INTO movies.genres (Name) VALUES (%s)"
+        values = (genre.name, )
         self.execute_commit_query('Insert Genres Table', query, values)
+
+    def insert_into_movies_table(self, movie):
+        query =  "INSERT INTO movies.movies (Title, Year, Genre, RatingId) VALUES (%s, %s, %s, %s)"
+        values = (movie.title, movie.year, movie.genre, movie.rating_id)
+        self.execute_commit_query('Insert Movies Table', query, values)
 
     def create_tables(self):
         self.create_genres_table()
         self.create_ratings_table()
         self.create_movies_table()
-        self.insert_into_genres_table()
                   
     def drop_table(self, table_name):
         self.execute_query('Drop Table' + table_name, "DROP TABLE IF EXISTS "  + table_name + " ; ")
