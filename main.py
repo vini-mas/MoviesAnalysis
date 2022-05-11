@@ -23,13 +23,13 @@ def movie_has_votes(votes):
     return str(votes) != "0.0"
 
 if __name__ == "__main__":
-    database_manager = DatabaseManager('root', 'ana123')
+    database_manager = DatabaseManager('root', 'admin')
     
     if database_manager.connection:
         database_manager.reset_database()
         database_manager.create_tables()
 
-        imdb_data_importer = ImdbDataImporter(limit_movie_rows=500000)
+        imdb_data_importer = ImdbDataImporter()
 
         added_genres: list[Genre] = []
         bar = initialize_progress_bar(f'Inserting {len(imdb_data_importer.genres)} Genres', size=len(imdb_data_importer.genres))
@@ -40,16 +40,26 @@ if __name__ == "__main__":
 
         # Insert Movie
         ## 500k entries ~40min or more (genre takes a lot of time)
+        imdb_data_importer.movies.reset_index(drop=True, inplace=True)
+
         movies: list[Movie] = []
-        bar = initialize_progress_bar(f'Mapping {len(imdb_data_importer.movies)} Movies', size=len(imdb_data_importer.movies))
-        for index, row in imdb_data_importer.movies.iterrows():  
+        bar = initialize_progress_bar(f'Mapping {len(imdb_data_importer.movies.index)} Movies', size=len(imdb_data_importer.movies.index))
+        for index, row in imdb_data_importer.movies.iterrows():
             bar.update(index)
             if movie_has_votes(row[6]):
                 movies.append(Movie(0, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
         bar.finish()
 
-        print("\nInserting Movies...")
-        database_manager.insert_many_into_movie_table(movies)
+        steppedMovies = range(0, len(movies), 500)
+        bar = initialize_progress_bar(f'Inserting {len(movies)} Movies', size=len(movies))
+        for i in steppedMovies:
+            if len(movies) > i+500:
+                bar.update(i+500)
+                database_manager.insert_many_into_movie_table(movies[i:i+500])
+            else:
+                bar.update(len(movies))
+                database_manager.insert_many_into_movie_table(movies[i:len(movies)])
+        bar.finish()
 
         print("\nSelecting Inserted Movies...")
         inserted_movies = database_manager.get_all_movies()
@@ -67,14 +77,6 @@ if __name__ == "__main__":
         database_manager.insert_many_into_movie_genre_table(movie_genre_list)
 
         print("Done.")
-        # genre = Genre("terror")
-        # database_manager.insert_into_genres_table(genre)
-
-        # movie = Movie("ana", 1999, "linda", None)
-        # database_manager.insert_into_movies_table(movie)
-
-        # rating = Rating(10, 20)
-        # database_manager.insert_into_ratings_table(rating)
 
         database_manager.close_connection()
     else: 

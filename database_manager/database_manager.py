@@ -97,7 +97,7 @@ class DatabaseManager:
         self.execute_query('Create MovieGenre Table', 
             """CREATE TABLE MovieGenre (                 
                 MovieId int(11) NOT NULL,
-                GenreId int(11)T NOT NULL,
+                GenreId int(11) NOT NULL,
                 FOREIGN KEY(MovieId) REFERENCES Movie(MovieId),
                 FOREIGN KEY(GenreId) REFERENCES Genre(GenreId),
                 PRIMARY KEY CLUSTERED (MovieId, GenreId))""")
