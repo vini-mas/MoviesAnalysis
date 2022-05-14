@@ -1,7 +1,9 @@
 from database_manager.database_manager import DatabaseManager
+from entities.cast import Cast
 from entities.genre import Genre
 from entities.movie import Movie
 from entities.movie_genre import MovieGenre
+from entities.person import Person
 from imdb_data_importer.imdb_data_importer import ImdbDataImporter
 import numpy as np
 import pandas as pd
@@ -76,7 +78,54 @@ if __name__ == "__main__":
         print("\nInserting MovieGenres...")
         database_manager.insert_many_into_movie_genre_table(movie_genre_list)
 
-        print("Done.")
+        bar = initialize_progress_bar(f'Mapping {len(imdb_data_importer.persons.index)} Persons', size=len(imdb_data_importer.persons.index))        
+        persons: list[Person] = []
+        for index, row in imdb_data_importer.persons.iterrows():
+            bar.update(index)
+            persons.append(Person(0, row[0], row[1], row[2]))
+        bar.finish()
+        
+        steppedPersons = range(0, len(persons), 500)
+        bar = initialize_progress_bar(f'Inserting {len(persons)} Persons', size=len(persons))
+        for i in steppedPersons:
+            if len(persons) > i+500:
+                bar.update(i+500)
+                database_manager.insert_many_into_person_table(persons[i:i+500])
+            else:
+                bar.update(len(persons))
+                database_manager.insert_many_into_movie_table(persons[i:len(movies)])
+        bar.finish()
+        
+        print("\nSelecting Inserted Persons...")
+        inserted_persons = database_manager.get_all_persons()
+
+        casts: list[Cast] = []
+        
+        # i_moviesdf = database_manager.get_all_movies_df().rename(columns={'MovieImdbId':'tconst'})
+        # merged_dir_wri = pd.merge(imdb_data_importer.directors_and_writers, i_moviesdf, on='tconst', how='left').reset_index(drop=True)        
+        # merged_dir_wri.drop(columns=[e for e in ['Type', 'Title', 'Genres', 'Year', 'AverageRating', 'Votes', 'tconst']], inplace=True)
+
+        bar = initialize_progress_bar(f'Mapping Cast from {len(imdb_data_importer.directors_and_writers.index)} Movies', size=len(imdb_data_importer.directors_and_writers.index)) 
+        for index, row in imdb_data_importer.directors_and_writers.iterrows():
+            bar.update(index)
+            directors: list[str] = row['directors'].split(',')
+            writers: list[str] = row['writers'].split(',')
+
+            movie_casts: list[Cast] = []
+            for director in directors:
+                if director in writers:
+                    writers.remove(director)
+                    movie_casts.append(Cast(0, director, row['tconst'], True, True))
+                else:                    
+                    movie_casts.append(Cast(0, director, row['tconst'], True, False))
+            
+            for writer in writers:
+                movie_casts.append(Cast(0, writer, row['tconst'], False, True))            
+            casts.extend(movie_casts)
+        bar.finish()
+
+        print("\nInserting Casts...")
+        database_manager.insert_many_into_cast_table(casts)
 
         database_manager.close_connection()
     else: 

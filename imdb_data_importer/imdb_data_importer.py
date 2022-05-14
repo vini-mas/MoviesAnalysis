@@ -6,12 +6,13 @@ class ImdbDataImporter:
     ratings: pd.DataFrame
     movies: pd.DataFrame
     directors_and_writers: pd.DataFrame
+    persons: pd.DataFrame
     genres: list[str] = []
 
     def __init__(self):
         print("\nConverting Data to Dataframe...")
         self.read_movies_and_ratings()
-        # self.read_directors_and_writers()
+        self.read_directors_and_writers()
         
 
     def read_movies_and_ratings(self):
@@ -56,9 +57,25 @@ class ImdbDataImporter:
         self.movies = self.movies.drop(columns=[e for e in dropped_columns])
 
     def read_directors_and_writers(self):
-        column_types = { 
+        self.directors_and_writers = pd.read_csv("imdb_data/directors_writers.tsv", sep='\t', dtype={ 
             'tconst': np.str_, 
             'directors': np.str_, 
             'writers': np.str_, 
+        }, na_values="\\N").reset_index(drop=True)
+        self.directors_and_writers['directors'].fillna("", inplace=True)        
+        self.directors_and_writers['writers'].fillna("", inplace=True)
+
+        personsColumns = { 
+            'nconst': np.str_,
+            'primaryName': np.str_,
+            'birthYear': pd.Int64Dtype(),
+            'deathYear': pd.Int64Dtype(),
+            'primaryProfession': np.str_,
+            'knownForTitles': np.str_,
         }
-        self.directors_and_writers = pd.read_csv("imdb_data/directors_writers.tsv", sep='\t', dtype=column_types, na_values="\\N").reset_index()
+        self.persons = pd.read_csv("imdb_data/persons.tsv", sep='\t', dtype=personsColumns, na_values="\\N").reset_index(drop=True)        
+        self.persons['birthYear'].fillna(0, inplace=True)        
+        self.persons.dropna(subset = ["primaryName"], inplace=True)
+
+        dropped_columns = ['deathYear', 'primaryProfession', 'knownForTitles']
+        self.persons = self.persons.drop(columns=[e for e in dropped_columns])

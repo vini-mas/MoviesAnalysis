@@ -1,9 +1,4 @@
-from entities.genre import Genre
-import pandas as pd
-
-
 class Movie:
-
     def __init__(self, movie_id, movie_imdb_id, type, title, year, genres, average_rating, votes):
         self.movie_id = movie_id
         self.movie_imdb_id = movie_imdb_id

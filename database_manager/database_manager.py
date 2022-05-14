@@ -1,10 +1,13 @@
 from multiprocessing import connection
 import mysql.connector
 from mysql.connector import Error
+import pandas as pd
+from entities.cast import Cast
 from entities.genre import Genre
 
 from entities.movie import Movie
 from entities.movie_genre import MovieGenre
+from entities.person import Person
 
 class DatabaseManager:
     def __init__(self, user, password):
@@ -101,6 +104,25 @@ class DatabaseManager:
                 FOREIGN KEY(MovieId) REFERENCES Movie(MovieId),
                 FOREIGN KEY(GenreId) REFERENCES Genre(GenreId),
                 PRIMARY KEY CLUSTERED (MovieId, GenreId))""")
+                
+    def create_person_table(self):
+        self.execute_query('Create Person Table', 
+            """CREATE TABLE Person ( 
+                PersonId int(11) NOT NULL AUTO_INCREMENT,
+                PersonImdbId varchar(250) NOT NULL,
+                Name varchar(250) NOT NULL,
+                BirthYear int(11) NOT NULL,
+                PRIMARY KEY (PersonId))""")
+
+    def create_cast_table(self):
+        self.execute_query('Create Cast Table', 
+            """CREATE TABLE Cast (                 
+                CastId int(11) NOT NULL,
+                PersonImdbId varchar(250) NOT NULL,
+                MovieImdbId varchar(250) NOT NULL,
+                IsDirector BIT NOT NULL,
+                IsWriter BIT NOT NULL,
+                PRIMARY KEY (CastId))""")
 
     def insert_many_into_movie_table(self, movies: list[Movie]):
         values = []
@@ -123,13 +145,38 @@ class DatabaseManager:
         
         query =  "INSERT INTO movies.moviegenre (MovieId, GenreId) VALUES (%s, %s)"
         self.execute_many_commit_query('Insert Many into MovieGenre Table', query, values)
+        
+    def insert_many_into_person_table(self, persons: list[Person]):
+        values = []
+        for person in persons:
+            values.append((person.person_imdb_id, person.name, person.birth_date))
+        
+        query = "INSERT INTO movies.person (PersonImdbId, Name, BirthYear) VALUES (%s, %s, %s)"
+        self.execute_many_commit_query('Insert Many into Person Table', query, values)
+        
+    def insert_many_into_cast_table(self, casts: list[Cast]):
+        values = []
+        for cast in casts:
+            values.append((cast.movie_id, cast.person_id, cast.is_director, cast.is_writer))
+        
+        query = "INSERT INTO movies.cast (PersonImdbId, MovieImdbId, IsDirector, IsWriter) VALUES (%s, %s, %s, %s)"
+        self.execute_many_commit_query('Insert Many into Cast Table', query, values)
 
     def get_all_movies(self):        
         cursor = self.connection.cursor()
         cursor.execute("SELECT * FROM movie")
         records = cursor.fetchall()
+        return records
+        
+    def get_all_movies_df(self):        
+        df = pd.read_sql('SELECT * FROM movie', con=self.connection, columns=["movie_id", "movie_imdb_id", "type", "title", "year", "genres", "average_rating", "votes"])
+        return df
 
-        # return tuple (MovieId, MovieImdbId, Title, Year, AverageRating, Votes)
+    def get_all_persons(self):        
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM person")
+        records = cursor.fetchall()
+
         return records
 
 
@@ -138,6 +185,8 @@ class DatabaseManager:
         self.create_genre_table()
         self.create_movie_table()
         self.create_movie_genre_table()
+        self.create_person_table()
+        self.create_cast_table()
                   
     def drop_table(self, table_name):
         self.execute_query('Drop Table' + table_name, "DROP TABLE IF EXISTS "  + table_name + " ; ")
@@ -147,6 +196,8 @@ class DatabaseManager:
         self.drop_table('Ratings')
         self.drop_table('Genres')
         self.drop_table('MovieGenre')
+        self.drop_table('Cast')
+        self.drop_table('Person')
         self.drop_table('Movie')
         self.drop_table('Rating')
         self.drop_table('Genre')
