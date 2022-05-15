@@ -117,7 +117,7 @@ class DatabaseManager:
     def create_cast_table(self):
         self.execute_query('Create Cast Table', 
             """CREATE TABLE Cast (                 
-                CastId int(11) NOT NULL,
+                CastId int(11) NOT NULL AUTO_INCREMENT,
                 PersonImdbId varchar(250) NOT NULL,
                 MovieImdbId varchar(250) NOT NULL,
                 IsDirector BIT NOT NULL,
