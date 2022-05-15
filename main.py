@@ -1,3 +1,6 @@
+from pyclbr import Function
+
+from numpy import void
 from database_manager.database_manager import DatabaseManager
 from entities.cast import Cast
 from entities.genre import Genre
@@ -5,10 +8,11 @@ from entities.movie import Movie
 from entities.movie_genre import MovieGenre
 from entities.person import Person
 from imdb_data_importer.imdb_data_importer import ImdbDataImporter
-import numpy as np
-import pandas as pd
 import progressbar
 import os
+from typing import Callable, TypeVar
+
+T = TypeVar('T')
 
 def initialize_progress_bar(label: str, size: int):  
     print(f'\n{label}')
@@ -26,6 +30,18 @@ def movie_has_votes(votes):
 
 if __name__ == "__main__":
     database_manager = DatabaseManager('root', 'admin')
+
+    def steppedInsertion(insetionList: list[T], insertion: Callable[[list[T]], void], name: str):
+        steppedLists = range(0, len(insetionList), 500)
+        bar = initialize_progress_bar(f'Inserting {len(insetionList)} {name}', size=len(insetionList))
+        for i in steppedLists:
+            if len(insetionList) > i+500:
+                bar.update(i+500)
+                insertion(insetionList[i:i+500])
+            else:
+                bar.update(len(insetionList))
+                insertion(insetionList[i:len(insetionList)])
+        bar.finish()
     
     if database_manager.connection:
         database_manager.reset_database()
@@ -52,16 +68,7 @@ if __name__ == "__main__":
                 movies.append(Movie(0, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
         bar.finish()
 
-        steppedMovies = range(0, len(movies), 500)
-        bar = initialize_progress_bar(f'Inserting {len(movies)} Movies', size=len(movies))
-        for i in steppedMovies:
-            if len(movies) > i+500:
-                bar.update(i+500)
-                database_manager.insert_many_into_movie_table(movies[i:i+500])
-            else:
-                bar.update(len(movies))
-                database_manager.insert_many_into_movie_table(movies[i:len(movies)])
-        bar.finish()
+        steppedInsertion(movies, database_manager.insert_many_into_movie_table, 'Movies')          
 
         print("\nSelecting Inserted Movies...")
         inserted_movies = database_manager.get_all_movies()
@@ -75,8 +82,7 @@ if __name__ == "__main__":
             movie_genre_list.extend(genre_movies)
         bar.finish()
         
-        print("\nInserting MovieGenres...")
-        database_manager.insert_many_into_movie_genre_table(movie_genre_list)
+        steppedInsertion(movie_genre_list, database_manager.insert_many_into_movie_genre_table, 'MovieGenres')
 
         bar = initialize_progress_bar(f'Mapping {len(imdb_data_importer.persons.index)} Persons', size=len(imdb_data_importer.persons.index))        
         persons: list[Person] = []
@@ -85,16 +91,7 @@ if __name__ == "__main__":
             persons.append(Person(0, row[0], row[1], row[2]))
         bar.finish()
         
-        steppedPersons = range(0, len(persons), 500)
-        bar = initialize_progress_bar(f'Inserting {len(persons)} Persons', size=len(persons))
-        for i in steppedPersons:
-            if len(persons) > i+500:
-                bar.update(i+500)
-                database_manager.insert_many_into_person_table(persons[i:i+500])
-            else:
-                bar.update(len(persons))
-                database_manager.insert_many_into_movie_table(persons[i:len(persons)])
-        bar.finish()
+        steppedInsertion(persons, database_manager.insert_many_into_person_table, 'Persons')        
         
         print("\nSelecting Inserted Persons...")
         inserted_persons = database_manager.get_all_persons()
@@ -124,17 +121,10 @@ if __name__ == "__main__":
             casts.extend(movie_casts)
         bar.finish()
         
-        steppedCasts = range(0, len(casts), 500)
-        bar = initialize_progress_bar(f'Inserting {len(casts)} Casts', size=len(casts))
-        for i in steppedCasts:
-            if len(casts) > i+500:
-                bar.update(i+500)
-                database_manager.insert_many_into_cast_table(casts[i:i+500])
-            else:
-                bar.update(len(casts))
-                database_manager.insert_many_into_cast_table(casts[i:len(casts)])
-        bar.finish()
+        steppedInsertion(casts, database_manager.insert_many_into_cast_table, 'Casts')
         
         database_manager.close_connection()
     else: 
         raise Exception('Unable to connect to database')
+
+    
