@@ -93,7 +93,7 @@ if __name__ == "__main__":
                 database_manager.insert_many_into_person_table(persons[i:i+500])
             else:
                 bar.update(len(persons))
-                database_manager.insert_many_into_movie_table(persons[i:len(movies)])
+                database_manager.insert_many_into_movie_table(persons[i:len(persons)])
         bar.finish()
         
         print("\nSelecting Inserted Persons...")
@@ -123,10 +123,18 @@ if __name__ == "__main__":
                 movie_casts.append(Cast(0, writer, row['tconst'], False, True))            
             casts.extend(movie_casts)
         bar.finish()
-
-        print("\nInserting Casts...")
-        database_manager.insert_many_into_cast_table(casts)
-
+        
+        steppedCasts = range(0, len(casts), 500)
+        bar = initialize_progress_bar(f'Inserting {len(casts)} Casts', size=len(casts))
+        for i in steppedCasts:
+            if len(casts) > i+500:
+                bar.update(i+500)
+                database_manager.insert_many_into_cast_table(casts[i:i+500])
+            else:
+                bar.update(len(casts))
+                database_manager.insert_many_into_cast_table(casts[i:len(casts)])
+        bar.finish()
+        
         database_manager.close_connection()
     else: 
         raise Exception('Unable to connect to database')
