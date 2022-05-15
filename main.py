@@ -1,5 +1,3 @@
-from pyclbr import Function
-
 from numpy import void
 from database_manager.database_manager import DatabaseManager
 from entities.cast import Cast
