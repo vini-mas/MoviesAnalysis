@@ -157,7 +157,7 @@ class DatabaseManager:
     def insert_many_into_cast_table(self, casts: list[Cast]):
         values = []
         for cast in casts:
-            values.append((cast.movie_id, cast.person_id, cast.is_director, cast.is_writer))
+            values.append((cast.person_imdb_id, cast.movie_imdb_id, cast.is_director, cast.is_writer))
         
         query = "INSERT INTO movies.cast (PersonImdbId, MovieImdbId, IsDirector, IsWriter) VALUES (%s, %s, %s, %s)"
         self.execute_many_commit_query('Insert Many into Cast Table', query, values)
